@@ -13,7 +13,10 @@
 // limitations under the License.
 
 'use strict';
+
+// TODO - update import
 import {BigQuery} from '@google-cloud/bigquery';
+// TODO - update type(s)
 import type {Dataset} from '@google-cloud/bigquery';
 import {randomUUID} from 'crypto';
 
@@ -23,19 +26,25 @@ const datasetId = `${RESOURCE_PREFIX}_datasets_${randomUUID()}`.replace(
   /-/gi,
   '_',
 );
+// TODO - update client initialization
 const bigquery = new BigQuery();
 
 async function createDataset() {
+
+    // TODO - update what gets passed to the request
     // Specify the geographic location where the dataset should reside
     const options = {
       location: 'US',
     };
     // Create a new dataset
+    // TODO - update call and its parameters
     const [dataset] = await bigquery.createDataset(datasetId, options);
     console.log(`Dataset ${dataset.id} created.`);
   }
 async function listDatasets(){
     // Lists all datasets
+    // TODO - update what gets passed to the request
+    // TODO - update call and its parameters
     const [datasets] = await bigquery.getDatasets({projectId});
     console.log('Datasets:');
     datasets.forEach((dataset: Dataset) => console.log(dataset.id));
@@ -43,6 +52,8 @@ async function listDatasets(){
 
 // Get info about the dataset, update its description
 async function updateDataset(datasetId: string){
+    // TODO - update what gets passed to the request
+    // TODO - update call(s) and its parameters
     const dataset = bigquery.dataset(datasetId)
     const [datasetInfo] = await dataset.getMetadata();
     console.log("Dataset info:")
@@ -51,6 +62,8 @@ async function updateDataset(datasetId: string){
     const description = 'New dataset description.';
     datasetInfo.description = description;
 
+    // TODO - update what gets passed to the request
+    // TODO - update call and its parameters
     const [apiResponse] = await dataset.setMetadata(datasetInfo);
     const newDescription = apiResponse.description;
 
@@ -59,10 +72,10 @@ async function updateDataset(datasetId: string){
 
 }
   async function deleteDataset(datasetId: string) {
-
+    // TODO - update what gets passed to the request
     // Create a reference to the existing dataset
     const dataset = bigquery.dataset(datasetId);
-
+    // TODO - update call and its parameters
     // Delete the dataset and its contents
     await dataset.delete({force: true});
     console.log(`Dataset ${dataset.id} deleted.`);
