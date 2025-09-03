@@ -9,7 +9,7 @@
   },
   "repository": "leahecole/bq-friction-logging",
   "files": [
-    "build/src",
+    "build/src/*.js",
     "!build/src/**/*.map"
   ],
 

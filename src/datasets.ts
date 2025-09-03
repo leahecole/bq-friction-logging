@@ -45,6 +45,7 @@ async function listDatasets(){
 async function updateDataset(datasetId: string){
     const dataset = bigquery.dataset(datasetId)
     const [datasetInfo] = await dataset.getMetadata();
+    console.log("Dataset info:")
     console.log(datasetInfo)
     // Set new dataset description
     const description = 'New dataset description.';
