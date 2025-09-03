@@ -16,5 +16,8 @@
     "test/**/*.ts",
     "system-test/*.ts",
     "benchmark/*.ts"
+  ],
+  "exclude":[
+    "cleanup/datasets.ts"
   ]
 }

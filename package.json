@@ -25,7 +25,8 @@
     "datasets": "node build/src/datasets.js",
     "tables": "node build/src/tables.js",
     "routines": "node build/src/routines.js",
-    "models": "node build/src/models.js"
+    "models": "node build/src/models.js",
+    "cleanup-datasets": "node build/cleanup/datasets.js"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^8.1.1"
