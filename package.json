@@ -28,7 +28,7 @@
     "models": "node build/src/models.js"
   },
   "dependencies": {
-    "@google-cloud/bigquery": "^8.1.1"
+    "@google-cloud/bigquery": "file:./preview-bigquery.tgz"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
