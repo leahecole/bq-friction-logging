@@ -17,7 +17,7 @@
 // TODO - update import
 import {BigQuery} from '@google-cloud/bigquery';
 // TODO - update type(s)
-import type {Dataset} from '@google-cloud/bigquery';
+import type * as BigQueryType from '@google-cloud/bigquery';
 import {randomUUID} from 'crypto';
 
 const projectId = process.env.GCLOUD_PROJECT
@@ -47,7 +47,7 @@ async function listDatasets(){
     // TODO - update call and its parameters
     const [datasets] = await bigquery.getDatasets({projectId});
     console.log('Datasets:');
-    datasets.forEach((dataset: Dataset) => console.log(dataset.id));
+    datasets.forEach((dataset: BigQueryType.Dataset) => console.log(dataset.id));
 }
 
 // Get info about the dataset, update its description
