@@ -16,5 +16,10 @@
     "test/**/*.ts",
     "system-test/*.ts",
     "benchmark/*.ts"
+  ],
+  "exclude":[
+    "src/models.ts",
+    "src/tables.ts",
+    "src/routines.ts"
   ]
 }
