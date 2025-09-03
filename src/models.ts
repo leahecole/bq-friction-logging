@@ -20,25 +20,7 @@ const projectId = process.env.GCLOUD_PROJECT
 // Import the Google Cloud client library and create a client
 const bigquery = new BigQuery();
 // TODO(coleleah) change name
-async function listDatasets(){
-// Lists all datasets, for each dataset, 
-    const [datasets] = await bigquery.getDatasets({projectId});
-    console.log('Datasets:');
-    datasets.forEach((dataset: Dataset) => console.log(dataset.id));
-    // Show us what's going on there - does it have a friendly name, does it have a description, can you change it
 
-}
-async function listTables(datasetId: string){
-    // lists all tables, 
-    // TODO(COLELEAH): lists all of the information about them 
-     // List all tables in the dataset
-    const [tables] = await bigquery.dataset(datasetId).getTables();
-    // Show us what's going on there - does it have a friendly name, does it have a description, can you change it
-
-
-    console.log('Tables:');
-    tables.forEach((table: Table) => console.log(table.id));
-}
 async function listModels(datasetId: string){
 // List all models
     const dataset = bigquery.dataset(datasetId);
@@ -52,18 +34,9 @@ async function listModels(datasetId: string){
 
 
 }
-async function listRoutines(datasetId: string){
-// List all routines
-    const [routines] = await bigquery.dataset(datasetId).getRoutines();
-    console.log('Routines:');
-    routines.forEach(routine => console.log(routine.id));
-    // Show us what's going on there - does it have a friendly name, does it have a description, can you change it
 
-}
 
-listDatasets();
-listTables("leah_playground1125");
+
 listModels("nodejs_samples_tests_datasets_f8b28ba7_75ae_4583_adce_d10a97cb5940")
-listRoutines("nodejs_samples_tests_datasets_f8b28ba7_75ae_4583_adce_d10a97cb5940")
 
 
