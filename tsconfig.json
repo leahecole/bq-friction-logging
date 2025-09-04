@@ -20,7 +20,7 @@
   ],
   "exclude":[
     "src/models.ts",
-    "src/tables.ts",
+    "src/datasets.ts",
     "src/routines.ts"
   ]
 }
