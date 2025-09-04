@@ -51,7 +51,7 @@ const modelId = `${RESOURCE_PREFIX}_models_${UUID}`.replace(
 async function createModel() {
 
     // TODO - update what gets passed to the request
-    // Table resources live within datasets, so we need to create a dataset first
+    // Model resources live within datasets, so we need to create a dataset first
     const datasetOptions = {
       location: 'US',
     };

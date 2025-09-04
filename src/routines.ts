@@ -41,7 +41,7 @@ const routineId = `${RESOURCE_PREFIX}_routines_${UUID}`.replace(
 async function createRoutine() {
 
     // TODO - update what gets passed to the request
-    // Table resources live within datasets, so we need to create a dataset first
+    // Routine resources live within datasets, so we need to create a dataset first
     const datasetOptions = {
       location: 'US',
     };
