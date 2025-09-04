@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC
+// Copyright 2025 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,13 +13,15 @@
 // limitations under the License.
 
 'use strict';
-import {BigQuery} from '@google-cloud/bigquery';
+import {BigQueryClient} from '@google-cloud/bigquery';
 import type * as BigQueryType from '@google-cloud/bigquery';
 import {randomUUID} from 'crypto';
+import {setInterval} from 'node:timers/promises';
+
 
 const projectId = process.env.GCLOUD_PROJECT
 // Import the Google Cloud client library and create a client
-const bigquery = new BigQuery();
+const bigquery = new BigQueryClient();
 
 
 
@@ -48,23 +50,66 @@ const modelId = `${RESOURCE_PREFIX}_models_${UUID}`.replace(
 
 async function createModel() {
 
-    // TODO - update what gets passed to the request
-    // Table resources live within datasets, so we need to create a dataset first
-    const datasetOptions = {
+     // Specify the geographic location where the dataset should reside
+    const datasetObject: BigQueryType.protos.google.cloud.bigquery.v2.IDataset = {
+      datasetReference: {
+        datasetId: datasetId,
+      },
       location: 'US',
     };
-    // TODO - update call and its parameters
-    const [dataset] = await bigquery.createDataset(datasetId, datasetOptions);
+
+    // Construct the request object.
+    const datasetRequest: BigQueryType.protos.google.cloud.bigquery.v2.IInsertDatasetRequest = {
+      projectId: projectId,
+      dataset: datasetObject,
+    };
+    // Create a new dataset
+    const [dataset] = await bigquery.insertDataset(datasetRequest) as [
+      BigQueryType.protos.google.cloud.bigquery.v2.IDataset,
+      BigQueryType.protos.google.cloud.bigquery.v2.IInsertDatasetRequest | undefined,
+      {} | undefined,
+    ];
     console.log(`Dataset ${dataset.id} created.`);
-    const queryOptions = {
-      query: query,
+    // Run query to create a model
+    const request = {
+      projectId: projectId,
+      job: {
+        configuration: {
+          query: {
+            query: query,
+            useLegacySql: {value: false},
+          },
+        },
+      },
     };
 
     // Run query to create a model
-    const [job] = await bigquery.createQueryJob(queryOptions);
+    const [jobResponse] = await bigquery.insertJob(request) as [
+      BigQueryType.protos.google.cloud.bigquery.v2.IJob,
+      BigQueryType.protos.google.cloud.bigquery.v2.IInsertJobRequest | undefined,
+      {} | undefined,
+    ] ;
+    const jobReference = jobResponse.jobReference;
 
-    // Wait for the query to finish
-    await job.getQueryResults();
+    const getQueryResultsRequest = {
+      projectId: projectId,
+      jobId: jobReference!.jobId,
+      location: jobReference!.location!.value,
+    };
+
+    // poll the job status every 3 seconds until complete
+    // eslint-disable-next-line
+    for await (const t of setInterval(3000)) { // no-unused-vars - this is the syntax for promise based setInterval
+      const [resp] = await bigquery.jobClient.getQueryResults(
+        getQueryResultsRequest,
+      );
+      if (resp.errors && resp.errors.length !== 0) {
+        throw new Error('Something failed in model creation');
+      }
+      if (resp.jobComplete && resp.jobComplete.value) {
+        break;
+      }
+    }
 
     console.log(`Model ${modelId} created.`);
 
@@ -72,52 +117,91 @@ async function createModel() {
 
 
 async function listModels(datasetId: string){
-// List all models
-    const dataset = bigquery.dataset(datasetId);
+  const request = {
+      projectId: projectId,
+      datasetId: datasetId,
+    };
 
-    dataset.getModels().then((data: BigQueryType.GetModelsResponse) => {
-      const models: BigQueryType.Model[] = data[0];
+    const [models] = await bigquery.listModels(request) as [
+      BigQueryType.protos.google.cloud.bigquery.v2.IModel[],
+      BigQueryType.protos.google.cloud.bigquery.v2.IListModelsRequest | null,
+      BigQueryType.protos.google.cloud.bigquery.v2.IListModelsResponse,
+    ];
+
+    if (models && models.length > 0) {
       console.log('Models:');
-      models.forEach((model: BigQueryType.Model) => console.log(model.metadata));
-    });
-    // Show us what's going on there - does it have a friendly name, does it have a description, can you change it
-
+      models.forEach(model => console.log(model));
+    } else {
+      console.log(`No models found in dataset ${datasetId}.`);
+    }
 
 }
 
 
 async function updateModel(modelId: string){
-    // TODO - update what gets passed to the request
-    // TODO - update call(s) and its parameters
-     // Retreive current model metadata
-    const model = bigquery.dataset(datasetId).model(modelId);
-    const [metadata] = await model.getMetadata();
+    // known limitation: patchModel must be called in REST fallback mode
+    const bigqueryClientREST = new BigQueryClient({}, {opts: {fallback: true}});
+
+  // Retreive current model metadata
+   const getRequest = {
+      projectId: projectId,
+      datasetId: datasetId,
+      modelId: modelId,
+    };
+
+    const [model] = await bigquery.getModel(getRequest) as [
+      BigQueryType.protos.google.cloud.bigquery.v2.IModel,
+      BigQueryType.protos.google.cloud.bigquery.v2.IGetModelRequest | undefined,
+      {} | undefined,
+    ];
+
+    console.log('Model:');
+    console.log(model);
 
     // Set new model description
     const description = 'New model description.';
-    metadata.description = description;
-    const [apiResponse] = await model.setMetadata(metadata);
-    const newDescription = apiResponse.description;
+    const updateRequest = {
+      projectId: projectId,
+      datasetId: datasetId,
+      modelId: modelId,
+      model: {
+        modelReference: {
+          projectId: projectId,
+          datasetId: datasetId,
+          modelId: modelId,
+        },
+        description: description,
+      },
+    };
 
-    console.log(`${modelId} description: ${newDescription}`);
+    const [response] = await bigqueryClientREST.patchModel(updateRequest) as [
+      BigQueryType.protos.google.cloud.bigquery.v2.IModel,
+      BigQueryType.protos.google.cloud.bigquery.v2.IPatchModelRequest | undefined,
+      {} | undefined,
+    ];
+
+    console.log(`${modelId} description: ${response.description}`);
 
 }
 
   async function deleteModel(modelId: string) {
-    // TODO - update what gets passed to the request
-    // Create a reference to the existing dataset
-    const dataset = bigquery.dataset(datasetId);
-    // TODO - update call and its parameters
+   const request = {
+      projectId: projectId,
+      datasetId: datasetId,
+      modelId: modelId,
+    };
 
-    // Create model reference and delete it
-    const model = dataset.model(modelId);
-    await model.delete();
+    await bigquery.deleteModel(request);
 
     console.log(`Model ${modelId} deleted.`);
-    // TODO - update call and its parameters
     // Delete the dataset and its contents
-    await dataset.delete({force: true});
-    console.log(`Dataset ${dataset.id} deleted.`);
+    const deleteRequest: BigQueryType.protos.google.cloud.bigquery.v2.IDeleteDatasetRequest = {
+      projectId: projectId,
+      datasetId: datasetId,
+      deleteContents: true, // Set to true to delete all tables in the dataset
+    };
+    await bigquery.deleteDataset(deleteRequest);
+      console.log(`Dataset ${datasetId} deleted.`);
   }
 
 // wrap in an async main function so we can make calls in order
