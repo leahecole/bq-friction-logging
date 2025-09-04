@@ -124,7 +124,7 @@ async function updateRoutine(routineId: string){
 // wrap in an async main function so we can make calls in order
 async function main(){
     await createRoutine();
-    await listRoutines("nodejs_samples_tests_datasets_f8b28ba7_75ae_4583_adce_d10a97cb5940")
+    await listRoutines(datasetId)
     await updateRoutine(routineId)
     await deleteRoutine(routineId)
 }
