@@ -13,10 +13,12 @@
 // limitations under the License.
 
 'use strict';
+// TODO - update import
 import {BigQuery} from '@google-cloud/bigquery';
 import type * as BigQueryType from '@google-cloud/bigquery';
 const projectId = process.env.GCLOUD_PROJECT
 // Import the Google Cloud client library and create a client
+// TODO - update client initialization
 const bigquery = new BigQuery();
 import {randomUUID} from 'crypto';
 
@@ -66,7 +68,6 @@ async function listTables(datasetId: string){
     tables.forEach((table: BigQueryType.Table) => console.log(table.id));
 }
 
-// Get info about the dataset, update its description
 async function updateTable(tableId: string){
     // TODO - update what gets passed to the request
     // TODO - update call(s) and its parameters

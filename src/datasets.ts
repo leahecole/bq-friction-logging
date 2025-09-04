@@ -16,7 +16,6 @@
 
 // TODO - update import
 import {BigQuery} from '@google-cloud/bigquery';
-// TODO - update type(s)
 import type * as BigQueryType from '@google-cloud/bigquery';
 import {randomUUID} from 'crypto';
 
