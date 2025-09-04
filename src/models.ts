@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC
+// Copyright 2025 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,14 +13,15 @@
 // limitations under the License.
 
 'use strict';
+// TODO - update import
 import {BigQuery} from '@google-cloud/bigquery';
 import type * as BigQueryType from '@google-cloud/bigquery';
 import {randomUUID} from 'crypto';
 
 const projectId = process.env.GCLOUD_PROJECT
 // Import the Google Cloud client library and create a client
+// TODO - update client initialization
 const bigquery = new BigQuery();
-// TODO(coleleah) change name
 
 
 
