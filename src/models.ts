@@ -14,21 +14,71 @@
 
 'use strict';
 import {BigQuery} from '@google-cloud/bigquery';
-import type {Dataset, Table,  GetModelsResponse, Model} from '@google-cloud/bigquery';
-//TODO(coleleah) is this what we want?
+import type * as BigQueryType from '@google-cloud/bigquery';
+import {randomUUID} from 'crypto';
+
 const projectId = process.env.GCLOUD_PROJECT
 // Import the Google Cloud client library and create a client
 const bigquery = new BigQuery();
-// TODO(coleleah) change name
+
+
+
+
+const RESOURCE_PREFIX = 'bq_friction_logging';
+const UUID = randomUUID() 
+const datasetId = `${RESOURCE_PREFIX}_datasets_${UUID}`.replace(
+  /-/gi,
+  '_',
+);
+const modelId = `${RESOURCE_PREFIX}_models_${UUID}`.replace(
+  /-/gi,
+  '_',
+);
+ const query = `CREATE OR REPLACE MODEL \`${projectId}.${datasetId}.${modelId}\`
+    OPTIONS (
+			model_type='linear_reg',
+			max_iterations=1,
+			learn_rate=0.4,
+			learn_rate_strategy='constant'
+		) AS (
+			SELECT 'a' AS f1, 2.0 AS label
+			UNION ALL
+			SELECT 'b' AS f1, 3.8 AS label
+		)`;
+
+async function createModel() {
+
+    // TODO - update what gets passed to the request
+    // Table resources live within datasets, so we need to create a dataset first
+    const datasetOptions = {
+      location: 'US',
+    };
+    // TODO - update call and its parameters
+    const [dataset] = await bigquery.createDataset(datasetId, datasetOptions);
+    console.log(`Dataset ${dataset.id} created.`);
+    const queryOptions = {
+      query: query,
+    };
+
+    // Run query to create a model
+    const [job] = await bigquery.createQueryJob(queryOptions);
+
+    // Wait for the query to finish
+    await job.getQueryResults();
+
+    console.log(`Model ${modelId} created.`);
+
+  }
+
 
 async function listModels(datasetId: string){
 // List all models
     const dataset = bigquery.dataset(datasetId);
 
-    dataset.getModels().then((data: GetModelsResponse) => {
-      const models: Model[] = data[0];
+    dataset.getModels().then((data: BigQueryType.GetModelsResponse) => {
+      const models: BigQueryType.Model[] = data[0];
       console.log('Models:');
-      models.forEach((model: Model) => console.log(model.metadata));
+      models.forEach((model: BigQueryType.Model) => console.log(model.metadata));
     });
     // Show us what's going on there - does it have a friendly name, does it have a description, can you change it
 
@@ -36,7 +86,48 @@ async function listModels(datasetId: string){
 }
 
 
+async function updateModel(modelId: string){
+    // TODO - update what gets passed to the request
+    // TODO - update call(s) and its parameters
+     // Retreive current model metadata
+    const model = bigquery.dataset(datasetId).model(modelId);
+    const [metadata] = await model.getMetadata();
 
-listModels("nodejs_samples_tests_datasets_f8b28ba7_75ae_4583_adce_d10a97cb5940")
+    // Set new model description
+    const description = 'New model description.';
+    metadata.description = description;
+    const [apiResponse] = await model.setMetadata(metadata);
+    const newDescription = apiResponse.description;
+
+    console.log(`${modelId} description: ${newDescription}`);
+
+}
+
+  async function deleteModel(modelId: string) {
+    // TODO - update what gets passed to the request
+    // Create a reference to the existing dataset
+    const dataset = bigquery.dataset(datasetId);
+    // TODO - update call and its parameters
+
+    // Create model reference and delete it
+    const model = dataset.model(modelId);
+    await model.delete();
+
+    console.log(`Model ${modelId} deleted.`);
+    // TODO - update call and its parameters
+    // Delete the dataset and its contents
+    await dataset.delete({force: true});
+    console.log(`Dataset ${dataset.id} deleted.`);
+  }
+
+// wrap in an async main function so we can make calls in order
+async function main(){
+    await createModel();
+    await listModels(datasetId)
+    await updateModel(modelId)
+    await deleteModel(modelId)
+}
+main()
+
 
 

@@ -15,11 +15,10 @@
     "test/*.ts",
     "test/**/*.ts",
     "system-test/*.ts",
-    "benchmark/*.ts",
-    "cleanup/*.ts"
+    "benchmark/*.ts"
   ],
   "exclude":[
-    "src/models.ts",
+    "src/routines.ts",
     "src/datasets.ts",
     "src/routines.ts"
   ]
