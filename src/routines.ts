@@ -13,15 +13,13 @@
 // limitations under the License.
 
 'use strict';
-// TODO - update import
-import {BigQuery} from '@google-cloud/bigquery';
+import {BigQueryClient} from '@google-cloud/bigquery';
 import type * as BigQueryType from '@google-cloud/bigquery';
 import {randomUUID} from 'crypto';
 
 const projectId = process.env.GCLOUD_PROJECT
 // Import the Google Cloud client library and create a client
-// TODO - update client initialization
-const bigquery = new BigQuery();
+const bigquery = new BigQueryClient();
 
 
 
@@ -40,62 +38,113 @@ const routineId = `${RESOURCE_PREFIX}_routines_${UUID}`.replace(
 
 async function createRoutine() {
 
-    // TODO - update what gets passed to the request
-    // Table resources live within datasets, so we need to create a dataset first
-    const datasetOptions = {
+    // Routine resources live within datasets, so we need to create a dataset first
+    const datasetObject: BigQueryType.protos.google.cloud.bigquery.v2.IDataset = {
+      datasetReference: {
+        datasetId: datasetId,
+      },
       location: 'US',
     };
-    // TODO - update call and its parameters
-    const [dataset] = await bigquery.createDataset(datasetId, datasetOptions);
-    console.log(`Dataset ${dataset.id} created.`);
-    // Create routine reference
-    let routine = dataset.routine(routineId);
 
-    const config = {
+    // Construct the request object.
+    const datasetRequest: BigQueryType.protos.google.cloud.bigquery.v2.IInsertDatasetRequest = {
+      projectId: projectId,
+      dataset: datasetObject,
+    };
+    // Create a new dataset
+    const [dataset] = await bigquery.insertDataset(datasetRequest) as [
+      BigQueryType.protos.google.cloud.bigquery.v2.IDataset,
+      BigQueryType.protos.google.cloud.bigquery.v2.IInsertDatasetRequest | undefined,
+      {} | undefined,
+    ];
+    console.log(`Dataset ${dataset.id} created.`);
+    const routine: BigQueryType.protos.google.cloud.bigquery.v2.IRoutine = {
+      routineReference: {
+        projectId,
+        datasetId,
+        routineId,
+      },
       arguments: [
         {
           name: 'x',
-          dataType: {
-            typeKind: 'INT64',
-          },
+          dataType: {typeKind: 'INT64'},
         },
       ],
       definitionBody: 'x * 3',
       routineType: 'SCALAR_FUNCTION',
-      returnType: {
-        typeKind: 'INT64',
-      },
+      returnType: {typeKind: 'INT64'},
     };
 
+    const insertRequest: BigQueryType.protos.google.cloud.bigquery.v2.IInsertRoutineRequest = {
+      projectId: projectId,
+      datasetId: datasetId,
+      routine: routine,
+    };
     // Make API call
-    [routine] = await routine.create(config);
+    const [response] = await bigquery.insertRoutine(insertRequest) as [
+      BigQueryType.protos.google.cloud.bigquery.v2.IRoutine,
+      BigQueryType.protos.google.cloud.bigquery.v2.IInsertRoutineRequest | undefined,
+      {} | undefined,
+    ];
 
-    console.log(`Routine ${routineId} created.`);
+    console.log(`Routine ${response.routineReference!.routineId} created.`);
 
   }
 
 
 async function listRoutines(datasetId: string){
 // List all routines
-    const [routines] = await bigquery.dataset(datasetId).getRoutines();
+ const listRequest = {
+      projectId: projectId,
+      datasetId: datasetId,
+    };
+    // List all routines in the dataset
+    const [routines] = await bigquery.listRoutines(listRequest) as [
+      BigQueryType.protos.google.cloud.bigquery.v2.IRoutine[],
+      BigQueryType.protos.google.cloud.bigquery.v2.IListRoutinesRequest | null,
+      BigQueryType.protos.google.cloud.bigquery.v2.IListRoutinesResponse,
+    ];
+
     console.log('Routines:');
-    routines.forEach((routine: BigQueryType.Routine) => console.log(routine.id));
-    // Show us what's going on there - does it have a friendly name, does it have a description, can you change it
+    routines.forEach(routine =>
+      console.log(routine.routineReference!.routineId),
+    );
 }
 
 
 
 async function updateRoutine(routineId: string){
-    // TODO - update what gets passed to the request
-    // TODO - update call(s) and its parameters
+
      // Retreive current routine metadata
-    const routine = bigquery.dataset(datasetId).routine(routineId);
-    const [metadata] = await routine.getMetadata();
+    const getRequest = {
+      projectId: projectId,
+      datasetId: datasetId,
+      routineId: routineId,
+    };
+    // Create routine reference and make API call
+    const [routine] = await bigquery.getRoutine(getRequest) as  [
+      BigQueryType.protos.google.cloud.bigquery.v2.IRoutine,
+      BigQueryType.protos.google.cloud.bigquery.v2.IGetRoutineRequest | undefined,
+      {} | undefined,
+    ];
+    console.log(`Routine ${routine}`)
+
 
     // Set new routine description
     const description = 'New routine description.';
-    metadata.description = description;
-    const [apiResponse] = await routine.setMetadata(metadata);
+    routine.description = description;
+   const updateRequest = {
+      projectId: projectId,
+      datasetId: datasetId,
+      routineId: routineId,
+      routine: routine,
+    };
+    // Make API call
+    const [apiResponse] = await bigquery.updateRoutine(updateRequest) as [
+      BigQueryType.protos.google.cloud.bigquery.v2.IRoutine,
+      BigQueryType.protos.google.cloud.bigquery.v2.IUpdateRoutineRequest | undefined,
+      {} | undefined,
+    ];
     const newDescription = apiResponse.description;
 
     console.log(`${routineId} description: ${newDescription}`);
@@ -103,22 +152,23 @@ async function updateRoutine(routineId: string){
 }
 
   async function deleteRoutine(routineId: string) {
-    // TODO - update what gets passed to the request
-    // Create a reference to the existing dataset
-    const dataset = bigquery.dataset(datasetId);
-    // TODO - update call and its parameters
-    // Delete the routine
-       // Create routine reference
-    let routine = dataset.routine(routineId);
-
+    const routineRequest = {
+      projectId: projectId,
+      datasetId: datasetId,
+      routineId: routineId,
+    };
     // Make API call
-    await routine.delete();
+    await bigquery.deleteRoutine(routineRequest);
 
     console.log(`Routine ${routineId} deleted.`);
-    // TODO - update call and its parameters
     // Delete the dataset and its contents
-    await dataset.delete({force: true});
-    console.log(`Dataset ${dataset.id} deleted.`);
+    const deleteRequest: BigQueryType.protos.google.cloud.bigquery.v2.IDeleteDatasetRequest = {
+        projectId: projectId,
+        datasetId: datasetId,
+        deleteContents: true, // Set to true to delete all tables in the dataset
+      };
+    await bigquery.deleteDataset(deleteRequest);
+      console.log(`Dataset ${datasetId} deleted.`);
   }
 
 // wrap in an async main function so we can make calls in order

@@ -14,12 +14,6 @@
     "src/**/*.ts",
     "test/*.ts",
     "test/**/*.ts",
-    "system-test/*.ts",
-    "benchmark/*.ts"
-  ],
-  "exclude":[
-    "src/routines.ts",
-    "src/datasets.ts",
-    "src/routines.ts"
+    "cleanup/*.ts"
   ]
 }
