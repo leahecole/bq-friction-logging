@@ -87,8 +87,6 @@ async function listModels(datasetId: string){
 }
 
 
-//TODO(coleleah)
-
 async function updateModel(modelId: string){
     // TODO - update what gets passed to the request
     // TODO - update call(s) and its parameters
